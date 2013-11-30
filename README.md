@@ -27,7 +27,9 @@ OUTPUT to Mongo DB for use in phase II.
 ### Phase II - Web Interface
 Build Node.js program to query db
 
-Create web interface to display % to empty
+Create web interface to display % to empty.
+
+Create web interface to add new beers and reset calculation.
 
 ### Phase III - Tracking & Metrics
 Past beer popularity
@@ -47,6 +49,8 @@ OUTPUT in a YML file to be parsed to WEB.
 
 ### Phase V - Upcoming
 Upcoming beers in queue.
+
+Add beers to WEB before they get racked -sounds neat-
 
 ### Phase VI - Social Media
 * IRC bot

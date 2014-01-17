@@ -110,6 +110,7 @@ void loop() {
   }
   
 }
+// Software reset function.
 void softReset(){
   asm volatile ("  jmp 0");
 }

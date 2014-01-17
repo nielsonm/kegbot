@@ -105,6 +105,7 @@ void loop() {
   } else {
    digitalWrite(ledPin, LOW);
   }
+  // Testing softReset - DELETE ME!!!!
   if (button1PushCounter >= 25 || button2PushCounter >= 20){
     softReset();
   }

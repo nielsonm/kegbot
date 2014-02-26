@@ -1,34 +1,13 @@
-/*
-  State change detection (edge detection)
- 	
- Often, you don't need to know the state of a digital input all the time,
- but you just need to know when the input changes from one state to another.
- For example, you want to know when a button goes from OFF to ON.  This is called
- state change detection, or edge detection.
- 
- This example shows how to detect when a button or button changes from off to on
- and on to off.
- 	
- The circuit:
- * pushbutton attached to pin 2 from +5V
- * 10K resistor attached to pin 2 from ground
- * LED attached from pin 13 to ground (or use the built-in LED on
-   most Arduino boards)
- 
- created  27 Sep 2005
- modified 30 Aug 2011
- by Tom Igoe
-
-This example code is in the public domain.
- 	
- http://arduino.cc/en/Tutorial/ButtonStateChange
- 
- */
+/**/
+#include <OneWire.h> 
 
 // this constant won't change:
 const int  button1Pin = 2;// the pin that the pushbutton is attached to
 const int  button2Pin = 4;// the pin that the pushbutton is attached to
 const int ledPin = 13;       // the pin that the LED is attached to
+int DS18S20_Pin = 10; //DS18S20 Signal pin on digital 0
+
+OneWire ds(DS18S20_Pin); // on digital pin 0
 
 // Variables will change:
 int button1PushCounter = 0;   // counter for the number of button presses
@@ -37,6 +16,7 @@ int button1State = 0;         // current state of the button
 int lastButton1State = 0;     // previous state of the button
 int button2State = 0;         // current state of the button
 int lastButton2State = 0;     // previous state of the button
+
 
 void setup() {
   // initialize the button pin as a input:
@@ -82,6 +62,8 @@ void loop() {
       Serial.println("on 2");
       Serial.print("number of button pushes:  ");
       Serial.println(button2PushCounter);
+      float temp = getTemp();
+      Serial.println(temp);
     } 
     else {
       // if the current state is LOW then the button
@@ -109,17 +91,56 @@ void loop() {
   if (button1PushCounter >= 25 || button2PushCounter >= 20){
     softReset();
   }
-  
 }
 // Software reset function.
 void softReset(){
   asm volatile ("  jmp 0");
 }
 
+float getTemp(){
+ //returns the temperature from one DS18S20 in DEG KELVIN
 
+ byte data[12];
+ byte addr[8];
 
+ if ( !ds.search(addr)) {
+   //no more sensors on chain, reset search
+   ds.reset_search();
+   return -1000;
+ }
 
+ if ( OneWire::crc8( addr, 7) != addr[7]) {
+   Serial.println("CRC is not valid!");
+   return -1000;
+ }
 
+ if ( addr[0] != 0x10 && addr[0] != 0x28) {
+   Serial.print("Device is not recognized");
+   return -1000;
+ }
 
+ ds.reset();
+ ds.select(addr);
+ ds.write(0x44,1); // start conversion, with parasite power on at the end
 
+ byte present = ds.reset();
+ ds.select(addr);  
+ ds.write(0xBE); // Read Scratchpad
 
+ 
+ for (int i = 0; i < 9; i++) { // we need 9 bytes
+  data[i] = ds.read();
+ }
+ 
+ ds.reset_search();
+ 
+ byte MSB = data[1];
+ byte LSB = data[0];
+
+ float tempRead = ((MSB << 8) | LSB); //using two's compliment
+ float TemperatureSum = tempRead / 16;
+ TemperatureSum += 273.15;
+ 
+ return TemperatureSum;
+ 
+}

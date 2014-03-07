@@ -1,13 +1,12 @@
-/**/
-#include <OneWire.h> 
+#include <OneWire.h>
 
 // this constant won't change:
-const int  button1Pin = 2;// the pin that the pushbutton is attached to
+const int  button1Pin = 8;// the pin that the pushbutton is attached to
 const int  button2Pin = 4;// the pin that the pushbutton is attached to
 const int ledPin = 13;       // the pin that the LED is attached to
 int DS18S20_Pin = 10; //DS18S20 Signal pin on digital 0
 
-OneWire ds(DS18S20_Pin); // on digital pin 0
+OneWire ds(DS18S20_Pin); // on digital pin 10
 
 // Variables will change:
 int button1PushCounter = 0;   // counter for the number of button presses
@@ -144,3 +143,4 @@ float getTemp(){
  return TemperatureSum;
  
 }
+

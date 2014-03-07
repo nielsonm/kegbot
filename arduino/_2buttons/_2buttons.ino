@@ -1,101 +1,90 @@
 #include <OneWire.h>
 
-// this constant won't change:
-const int  button1Pin = 8;// the pin that the pushbutton is attached to
-const int  button2Pin = 4;// the pin that the pushbutton is attached to
-const int ledPin = 13;       // the pin that the LED is attached to
+// which pin to use for reading the sensor? can use any pin!
+#define FLOWSENSORPIN1 4
+#define FLOWSENSORPIN2 8
+
 int DS18S20_Pin = 10; //DS18S20 Signal pin on digital 0
 
 OneWire ds(DS18S20_Pin); // on digital pin 10
 
-// Variables will change:
-int button1PushCounter = 0;   // counter for the number of button presses
-int button2PushCounter = 0;   // counter for the number of button presses
-int button1State = 0;         // current state of the button
-int lastButton1State = 0;     // previous state of the button
-int button2State = 0;         // current state of the button
-int lastButton2State = 0;     // previous state of the button
 
+
+// count how many pulses!
+volatile uint16_t pulses = 0;
+// track the state of the pulse pin
+volatile uint8_t lastflowpinstate;
+// you can try to keep time of how long it is between pulses
+volatile uint32_t lastflowratetimer = 0;
+// and use that to calculate a flow rate
+volatile float flowrate;
+// Interrupt is called once a millisecond, looks for any pulses from the sensor!
+SIGNAL(TIMER0_COMPA_vect) {
+  uint8_t x = digitalRead(FLOWSENSORPIN);
+  
+  if (x == lastflowpinstate) {
+    lastflowratetimer++;
+    return; // nothing changed!
+  }
+  
+  if (x == HIGH) {
+    //low to high transition!
+    pulses++;
+  }
+  lastflowpinstate = x;
+  flowrate = 1000.0;
+  flowrate /= lastflowratetimer;  // in hertz
+  lastflowratetimer = 0;
+}
+
+void useInterrupt(boolean v) {
+  if (v) {
+    // Timer0 is already used for millis() - we'll just interrupt somewhere
+    // in the middle and call the "Compare A" function above
+    OCR0A = 0xAF;
+    TIMSK0 |= _BV(OCIE0A);
+  } else {
+    // do not call the interrupt function COMPA anymore
+    TIMSK0 &= ~_BV(OCIE0A);
+  }
+}
 
 void setup() {
-  // initialize the button pin as a input:
-  pinMode(button1Pin, INPUT);
-  pinMode(button2Pin, INPUT);
-  // initialize the LED as an output:
-  pinMode(ledPin, OUTPUT);
-  // initialize serial communication:
-  Serial.begin(9600);
+   Serial.begin(9600);
+   Serial.print("Flow sensor test!");
+   
+   pinMode(FLOWSENSORPIN, INPUT);
+   digitalWrite(FLOWSENSORPIN, HIGH);
+   lastflowpinstate = digitalRead(FLOWSENSORPIN);
+   useInterrupt(true);
+}
+
+void loop()                     // run over and over again
+{ 
+  Serial.print("Freq: "); Serial.println(flowrate);
+  Serial.print("Pulses: "); Serial.println(pulses, DEC);
+  
+  // if a plastic sensor use the following calculation
+  // Sensor Frequency (Hz) = 7.5 * Q (Liters/min)
+  // Liters = Q * time elapsed (seconds) / 60 (seconds/minute)
+  // Liters = (Frequency (Pulses/second) / 7.5) * time elapsed (seconds) / 60
+  // Liters = Pulses / (7.5 * 60)
+  float liters = pulses;
+  liters /= 7.5;
+  liters /= 60.0;
+
+  Serial.print(liters); Serial.println(" Liters");
+ 
+  delay(1000
+  );
 }
 
 
-void loop() {
-  // read the pushbutton input pin:
-  button1State = digitalRead(button1Pin);
-  button2State = digitalRead(button2Pin);
-
-  // compare the buttonState to its previous state
-  if (button1State != lastButton1State) {
-    // if the state has changed, increment the counter
-    if (button1State == HIGH) {
-      // if the current state is HIGH then the button
-      // wend from off to on:
-      button1PushCounter++;
-      Serial.println("on 1");
-      Serial.print("number of button pushes:  ");
-      Serial.println(button1PushCounter);
-    } 
-    else {
-      // if the current state is LOW then the button
-      // wend from on to off:
-      //Serial.println("off"); 
-    }
-  }
-  
-  // compare the buttonState to its previous state
-  else if (button2State != lastButton2State) {
-    // if the state has changed, increment the counter
-    if (button2State == HIGH) {
-      // if the current state is HIGH then the button
-      // wend from off to on:
-      button2PushCounter++;
-      Serial.println("on 2");
-      Serial.print("number of button pushes:  ");
-      Serial.println(button2PushCounter);
-      float temp = getTemp();
-      Serial.println(temp);
-    } 
-    else {
-      // if the current state is LOW then the button
-      // wend from on to off:
-      // Serial.println("off"); 
-    }
-  }
-  
-  // save the current state as the last state, 
-  //for next time through the loop
-  lastButton1State = button1State;
-  lastButton2State = button2State;
-
-  
-  // turns on the LED every four button pushes by 
-  // checking the modulo of the button push counter.
-  // the modulo function gives you the remainder of 
-  // the division of two numbers:
-  if (button1PushCounter % 4 == 0 || button2PushCounter % 4 == 0) {
-    digitalWrite(ledPin, HIGH);
-  } else {
-   digitalWrite(ledPin, LOW);
-  }
-  // Testing softReset - DELETE ME!!!!
-  if (button1PushCounter >= 25 || button2PushCounter >= 20){
-    softReset();
-  }
-}
 // Software reset function.
 void softReset(){
   asm volatile ("  jmp 0");
 }
-
+// Get temperature function.
 float getTemp(){
  //returns the temperature from one DS18S20 in DEG KELVIN
 

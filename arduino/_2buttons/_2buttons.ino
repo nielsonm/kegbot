@@ -11,30 +11,45 @@ OneWire ds(DS18S20_Pin); // on digital pin 10
 
 
 // count how many pulses!
-volatile uint16_t pulses = 0;
+volatile uint16_t pulses1 = 0;
+volatile uint16_t pulses2 = 0;
+
+volatile uint16_t lastpulses = 0;
+
 // track the state of the pulse pin
-volatile uint8_t lastflowpinstate;
+volatile uint8_t lastflowpinstate1;
+volatile uint8_t lastflowpinstate2;
 // you can try to keep time of how long it is between pulses
 volatile uint32_t lastflowratetimer = 0;
 // and use that to calculate a flow rate
-volatile float flowrate;
+volatile float flowrate1;
+volatile float flowrate2;
 // Interrupt is called once a millisecond, looks for any pulses from the sensor!
 SIGNAL(TIMER0_COMPA_vect) {
-  uint8_t x = digitalRead(FLOWSENSORPIN);
+  uint8_t one = digitalRead(FLOWSENSORPIN1);
+  uint8_t two = digitalRead(FLOWSENSORPIN2);
   
-  if (x == lastflowpinstate) {
-    lastflowratetimer++;
-    return; // nothing changed!
-  }
-  
-  if (x == HIGH) {
+  if (one != lastflowpinstate1 && one == HIGH) {
     //low to high transition!
-    pulses++;
+    pulses1++;
   }
-  lastflowpinstate = x;
-  flowrate = 1000.0;
-  flowrate /= lastflowratetimer;  // in hertz
-  lastflowratetimer = 0;
+  
+  if (two != lastflowpinstate2 && two == HIGH) {
+    //low to high transition!
+    pulses2++;
+  }
+  
+  lastflowpinstate1 = one;
+  lastflowpinstate2 = two;
+  
+  uint16_t pulses = pulses1 = pulses2;
+  
+  if (pulses == lastpulses)
+  {
+    if (lastflowratetimer > -1)
+    lastflowratetimer++;
+  }
+  lastpulses = pulses;
 }
 
 void useInterrupt(boolean v) {
@@ -53,30 +68,36 @@ void setup() {
    Serial.begin(9600);
    Serial.print("Flow sensor test!");
    
-   pinMode(FLOWSENSORPIN, INPUT);
-   digitalWrite(FLOWSENSORPIN, HIGH);
-   lastflowpinstate = digitalRead(FLOWSENSORPIN);
+   pinMode(FLOWSENSORPIN1, INPUT);
+   pinMode(FLOWSENSORPIN2, INPUT);
+   digitalWrite(FLOWSENSORPIN1, HIGH);
+   digitalWrite(FLOWSENSORPIN2, HIGH);
+   lastflowpinstate1 = digitalRead(FLOWSENSORPIN1);
+   lastflowpinstate2 = digitalRead(FLOWSENSORPIN2);
    useInterrupt(true);
 }
 
 void loop()                     // run over and over again
 { 
-  Serial.print("Freq: "); Serial.println(flowrate);
-  Serial.print("Pulses: "); Serial.println(pulses, DEC);
+  Serial.print("Pulses: "); 
+  Serial.println(pulses1, DEC); Serial.println(pulses2, DEC);
   
   // if a plastic sensor use the following calculation
   // Sensor Frequency (Hz) = 7.5 * Q (Liters/min)
   // Liters = Q * time elapsed (seconds) / 60 (seconds/minute)
   // Liters = (Frequency (Pulses/second) / 7.5) * time elapsed (seconds) / 60
   // Liters = Pulses / (7.5 * 60)
-  float liters = pulses;
-  liters /= 7.5;
-  liters /= 60.0;
+  float liters1 = pulses1;
+  float liters2 = pulses2;
+  liters1 /= 7.5;
+  liters2 /= 7.5;
+  liters1 /= 60.0;
+  liters2 /= 60.0;
 
-  Serial.print(liters); Serial.println(" Liters");
+  Serial.print(liters1);
+  Serial.print(liters2); Serial.println(" Liters");
  
-  delay(1000
-  );
+  delay(1000);
 }
 
 

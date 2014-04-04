@@ -70,6 +70,7 @@ void setup() {
 }
 
 void loop(){ 
+
   Serial.print("Pulses: "); 
   Serial.println(pulses1, DEC); Serial.println(pulses2, DEC);
   
@@ -78,16 +79,15 @@ void loop(){
   // Liters = Q * time elapsed (seconds) / 60 (seconds/minute)
   // Liters = (Frequency (Pulses/second) / 7.5) * time elapsed (seconds) / 60
   // Liters = Pulses / (7.5 * 60)
-  float liters1 = pulses1;
-  liters1 /= 7.5;
-  liters1 /= 60.0;
   
-  float liters2 = pulses2;
-  liters2 /= 7.5;
-  liters2 /= 60.0;
+  //float liters1 = pulses1;
+  //liters1 /= 7.5;
+  //liters1 /= 60.0;
+  
+  //float liters2 = pulses2;
+  //liters2 /= 7.5;
+  //liters2 /= 60.0;
 
-  Serial.print(liters1);
-  Serial.print(liters2); Serial.println(" Liters");
  
   delay(1000);
 }

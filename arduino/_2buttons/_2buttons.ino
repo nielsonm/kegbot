@@ -4,7 +4,7 @@
 #define FLOWSENSORPIN1 4
 #define FLOWSENSORPIN2 8
 
-int DS18S20_Pin = 10; //DS18S20 Signal pin on digital 0
+int DS18S20_Pin = 10; //DS18S20 Signal pin on digital 10
 
 OneWire ds(DS18S20_Pin); // on digital pin 10
 
@@ -88,7 +88,11 @@ void loop(){
   //liters2 /= 7.5;
   //liters2 /= 60.0;
 
- 
+  // Print temperature in Kelvin.
+  //float temp = getTemp();
+  //Serial.println(temp);
+
+
   delay(1000);
 }
 
@@ -145,4 +149,3 @@ float getTemp(){
  return TemperatureSum;
  
 }
-

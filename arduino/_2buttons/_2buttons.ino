@@ -17,6 +17,10 @@ volatile uint16_t lastpulses = 0;
 // track the state of the pulse pin
 volatile uint8_t lastflowpinstate1;
 volatile uint8_t lastflowpinstate2;
+
+// Track the old temps.
+float lasttemp;
+
 // you can try to keep time of how long it is between pulses
 volatile uint32_t lastflowratetimer = 0;
 // and use that to calculate a flow rate
@@ -56,7 +60,7 @@ void useInterrupt(boolean v) {
 
 void setup() {
    Serial.begin(9600);
-   Serial.print("Flow sensor test!");
+   Serial.println("Flow sensor test!");
    
    pinMode(FLOWSENSORPIN1, INPUT);
    digitalWrite(FLOWSENSORPIN1, HIGH);
@@ -65,14 +69,14 @@ void setup() {
    pinMode(FLOWSENSORPIN2, INPUT);
    digitalWrite(FLOWSENSORPIN2, HIGH);
    lastflowpinstate2 = digitalRead(FLOWSENSORPIN2);
+   lasttemp = 0;
    
    useInterrupt(true);
 }
 
 void loop(){ 
 
-  Serial.print("Pulses: "); 
-  Serial.println(pulses1, DEC); Serial.println(pulses2, DEC);
+  
   
   // if a plastic sensor use the following calculation
   // Sensor Frequency (Hz) = 7.5 * Q (Liters/min)
@@ -89,8 +93,25 @@ void loop(){
   //liters2 /= 60.0;
 
   // Print temperature in Kelvin.
-  //float temp = getTemp();
-  //Serial.println(temp);
+  float temp = getTemp();
+  
+  
+  // Check temp, one and two
+  if (0 < pulses1 || 0 < pulses2 || abs(lasttemp-temp) > .1 ){
+    //Serial.print("Temp: ");
+    //Serial.println(temp);
+    //Serial.print("Pulses: ");
+    //Serial.println(pulses1, DEC); Serial.println(pulses2, DEC);
+    Serial.print(temp);
+    Serial.print(',');
+    Serial.print(pulses1);
+    Serial.print(',');
+    Serial.println(pulses2);
+    // Reset them all.
+    pulses1 = 0;
+    pulses2 = 0;
+    lasttemp = temp;
+  }
 
 
   delay(1000);

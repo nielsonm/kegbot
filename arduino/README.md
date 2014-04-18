@@ -18,4 +18,13 @@ Connect the red wire to +5V, the black wire to common ground and the yellow sens
 #### Temperature sensor
 DS18B20 requires the [Dallas library](https://github.com/milesburton/Arduino-Temperature-Control-Library) as well as the [OneWire library](http://playground.arduino.cc/Learning/OneWire) to run.
 
-NOTE: Temperature will be output in C.  Which may necessitate a conversion subroutine either in the rPi or the Web UI.
+NOTE: Temperature will be output in kelvin.  Which may necessitate a conversion subroutine either in the rPi or the Web UI.
+
+### Output
+
+Output is a csv triple with temp, tap one, and tap two.
+
+Sample output:
+
+297.21,0,0
+297.09,0,0
